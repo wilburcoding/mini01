@@ -1,0 +1,9 @@
+# Sample input file for the Julia graph project
+# Each line is an edge: node1 node2
+1 2
+2 3
+3 4
+4 1
+2 4
+1 5
+3 5
