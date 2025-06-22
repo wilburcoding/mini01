@@ -35,31 +35,6 @@ function build_graph(edges)
     return g
 end
 
-function plot_graph(g)
-    n = nv(g)
-    fig, ax, p = graphplot(g, node_labels=fill("", n), node_color=:lightblue, node_size=60, node_strokewidth=2, node_strokecolor=:black)
-    hidespines!(ax)
-    hidedecorations!(ax)
-    # Fallback for older GraphMakie: node positions are stored as p[:node_pos], which is an Observable
-    positions = haskey(p, :node_pos) ? p[:node_pos][] : nothing
-    if positions === nothing
-        error("Could not find node positions in the plot object. Please update GraphMakie or check documentation.")
-    end
-    # Compute axis limits with padding
-    xs = [pos[1] for pos in positions]
-    ys = [pos[2] for pos in positions]
-    xpad = 0.1 * (maximum(xs) - minimum(xs) + 1e-6)
-    ypad = 0.1 * (maximum(ys) - minimum(ys) + 1e-6)
-    xlims!(ax, minimum(xs) - xpad, maximum(xs) + xpad)
-    ylims!(ax, minimum(ys) - ypad, maximum(ys) + ypad)
-    for i in 1:n
-        pos = positions[i]
-        text!(ax, string(i), position=pos, align = (:center, :center), color=:black, fontsize=18)
-    end
-    display(fig)
-    return fig
-end
-
 function interactive_plot_graph(g)
     n = nv(g)
     edges = collect(Graphs.edges(g))
@@ -117,7 +92,7 @@ function interactive_plot_graph(g)
 end
 
 function main()
-    edges = read_edges("graph01.txt")
+    edges = read_edges("graph03.txt")
     g = build_graph(edges)
     fig = interactive_plot_graph(g)
     return nothing
