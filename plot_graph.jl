@@ -35,7 +35,7 @@ function build_graph(edges)
     return g
 end
 
-function interactive_plot_graph(g, node_colors, node_text_colors)
+function interactive_plot_graph(g, node_colors, node_text_colors, node_color_indices, color_palette)
     n = nv(g)
     edges = collect(Graphs.edges(g))
     width, height = 800, 600
@@ -43,15 +43,20 @@ function interactive_plot_graph(g, node_colors, node_text_colors)
     radius = min(width, height) * 0.4
     positions = Observable([Point2f0(cx + radius * cos(2π*i/n), cy + radius * sin(2π*i/n)) for i in 1:n])
 
+    # Use an Observable for node colors to allow interactive updates
+    node_colors_obs = Observable(copy(node_colors))
+    node_color_indices_obs = Observable(copy(node_color_indices))
+    node_text_colors_obs = Observable(copy(node_text_colors))
+
     scene = Scene(size = (width, height), camera = campixel!)
 
     # Plot edges
     [lines!(scene, lift(pos -> [pos[src(e)], pos[dst(e)]], positions), color=:gray, linewidth=2) for e in edges]
-    # Plot nodes as scatter, use node_colors directly
+    # Plot nodes as scatter, use node_colors_obs directly
     scatter!(scene, lift(pos -> first.(pos), positions), lift(pos -> last.(pos), positions),
-        color=node_colors, strokewidth=2, strokecolor=:black, markersize=60)
-    # Plot labels, use node_text_colors for each node
-    [text!(scene, string(i), position=lift(pos -> pos[i], positions), align=(:center, :center), color=node_text_colors[i], fontsize=18) for i in 1:n]
+        color=node_colors_obs, strokewidth=2, strokecolor=:black, markersize=60)
+    # Plot labels, use node_text_colors_obs for each node
+    [text!(scene, string(i), position=lift(pos -> pos[i], positions), align=(:center, :center), color=lift(_ -> node_text_colors_obs[][i], node_text_colors_obs), fontsize=18) for i in 1:n]
 
     # Dragging state
     dragging = Observable(false)
@@ -59,14 +64,21 @@ function interactive_plot_graph(g, node_colors, node_text_colors)
     last_mousepos = Observable(Point2f0(0, 0))
     mouse_down_pos = Observable(Point2f0(0, 0))
     mouse_down_node = Observable(0)
+    moved = Observable(false)
 
     on(scene.events.mouseposition) do pos
         last_mousepos[] = Point2f0(pos[1], pos[2])
         if dragging[] && drag_idx[] > 0
-            mousepos = last_mousepos[]
-            newpos = copy(positions[])
-            newpos[drag_idx[]] = mousepos
-            positions[] = newpos
+            # Only start moving if the mouse has moved more than a threshold
+            if !moved[] && norm(last_mousepos[] .- mouse_down_pos[]) > 5
+                moved[] = true
+            end
+            if moved[]
+                mousepos = last_mousepos[]
+                newpos = copy(positions[])
+                newpos[drag_idx[]] = mousepos
+                positions[] = newpos
+            end
         end
     end
 
@@ -74,28 +86,39 @@ function interactive_plot_graph(g, node_colors, node_text_colors)
         if event.button == Mouse.left
             if event.action == Mouse.press
                 mousepos = last_mousepos[]
-                # Find closest node within radius
                 for i in 1:n
                     if norm(mousepos .- positions[][i]) < 30  # 30 pixels for easier selection
                         dragging[] = true
                         drag_idx[] = i
                         mouse_down_pos[] = mousepos
                         mouse_down_node[] = i
+                        moved[] = false
                         break
                     end
                 end
             elseif event.action == Mouse.release
-                # If released on the same node and not moved, treat as click
                 if dragging[] && drag_idx[] > 0
-                    moved = norm(last_mousepos[] .- mouse_down_pos[]) > 5  # 5 pixels threshold
-                    if !moved && mouse_down_node[] == drag_idx[]
+                    # Only cycle color if not moved and press/release on same node
+                    if !moved[] && mouse_down_node[] == drag_idx[]
                         idx = drag_idx[]
-                        # No color cycling logic needed when using node_colors directly
+                        # Cycle the color index
+                        new_color_indices = copy(node_color_indices_obs[])
+                        new_color_indices[idx] = mod1(new_color_indices[idx] + 1, length(color_palette))
+                        node_color_indices_obs[] = new_color_indices
+                        # Update node colors from indices
+                        new_colors = copy(node_colors_obs[])
+                        new_colors[idx] = color_palette[new_color_indices[idx]]
+                        node_colors_obs[] = new_colors
+                        # Update node text color for this node
+                        new_text_colors = copy(node_text_colors_obs[])
+                        new_text_colors[idx] = Colors.Lab(RGB(new_colors[idx])).l > 50 ? :black : :white
+                        node_text_colors_obs[] = new_text_colors
                     end
                 end
                 dragging[] = false
                 drag_idx[] = 0
                 mouse_down_node[] = 0
+                moved[] = false
             end
         end
     end

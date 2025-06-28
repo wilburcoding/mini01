@@ -25,7 +25,7 @@ function label_propagation(g, node_info)
     end
 end
 
-function main(filename = "graph05.txt")
+function main(filename = "graph_input.txt")
     edge_list = read_edges(filename)
     g = build_graph(edge_list)
 
@@ -36,20 +36,21 @@ function main(filename = "graph05.txt")
     end
     
     # Run label propagation
-    label_propagation(g, node_info)
+    # label_propagation(g, node_info)
 
     # Assign a color to each unique label
     labels = unique([node.label for node in values(node_info)])
     color_palette = Makie.distinguishable_colors(length(labels))
-    # Map each label to a color
-    label_to_color = Dict(labels[i] => color_palette[i] for i in eachindex(labels))
-    # Assign node colors based on their label
-    node_colors = [label_to_color[node_info[n].label] for n in 1:nv(g)]
+    # Map each label to a color index
+    label_to_color_index = Dict(labels[i] => i for i in eachindex(labels))
+    # Assign node color indices based on their label
+    node_color_indices = [label_to_color_index[node_info[n].label] for n in 1:nv(g)]
+    # Assign node colors based on their color index
+    node_colors = [color_palette[i] for i in node_color_indices]
     # Assign node text color: white if node color is dark, else black
     node_text_colors = [Colors.Lab(RGB(c)).l > 50 ? :black : :white for c in node_colors]
-    
-    # Plot the graph so the user can interact with it
-    interactive_plot_graph(g, node_colors, node_text_colors)
+    # Plot the graph so the user can interact with it, passing color indices and palette
+    interactive_plot_graph(g, node_colors, node_text_colors, node_color_indices, color_palette)
 end
 
 main()

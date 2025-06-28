@@ -1,5 +1,3 @@
-# Sample input file for the Julia graph project
-# Each line is an edge: node1 node2
 1 2
 2 3
 3 4
