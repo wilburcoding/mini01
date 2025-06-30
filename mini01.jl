@@ -25,7 +25,7 @@ function label_propagation(g, node_info)
     end
 end
 
-function main(filename = "graph04.txt")
+function main(filename = "graph03.txt")
     edge_list = read_edges(filename)
     g = build_graph(edge_list)
 
@@ -41,12 +41,14 @@ function main(filename = "graph04.txt")
     # Use a fixed-size color palette for cycling, e.g., 16 colors
     palette_size = 16
     color_palette = Makie.distinguishable_colors(palette_size)
+
     # Assign initial color indices based on label (but allow cycling through all palette colors)
     labels = unique([node.label for node in values(node_info)])
     label_to_color_index = Dict(labels[i] => mod1(i, palette_size) for i in eachindex(labels))
     node_color_indices = [label_to_color_index[node_info[n].label] for n in 1:nv(g)]
     node_colors = [color_palette[i] for i in node_color_indices]
     node_text_colors = [Colors.Lab(RGB(c)).l > 50 ? :black : :white for c in node_colors]
+    
     interactive_plot_graph(g, node_colors, node_text_colors, node_color_indices, color_palette)
 end
 

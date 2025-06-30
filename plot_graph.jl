@@ -1,5 +1,6 @@
 #= 
-This script reads a text file where each line is an edge ("x y") and displays the graph using GraphMakie.
+Written entirely by Copilot and GPT 4.1, this script reads a text file where 
+each line is an edge ("x y") and then displays the graph using GraphMakie.
 =#
 using Graphs
 using GraphMakie
