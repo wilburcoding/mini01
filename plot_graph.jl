@@ -36,7 +36,7 @@ function build_graph(edges)
     return g
 end
 
-function interactive_plot_graph(g, node_colors, node_text_colors, node_color_indices, color_palette)
+function interactive_plot_graph(g, node_info, node_colors, node_text_colors, node_color_indices, color_palette)
     n = nv(g)
     edges = collect(Graphs.edges(g))
     width, height = 800, 600
@@ -50,6 +50,11 @@ function interactive_plot_graph(g, node_colors, node_text_colors, node_color_ind
     node_text_colors_obs = Observable(copy(node_text_colors))
 
     scene = Scene(size = (width, height), camera = campixel!)
+    # Observable for score, initialize with the correct score
+    initial_score = dave_score(g, node_info, node_color_indices)
+    score_obs = Observable(initial_score)
+    # Display score in the plot window (top left)
+    text!(scene, lift(s -> "Score: $(s)", score_obs), position=Point2f0(20, height-30), align=(:left, :center), color=:black, fontsize=28)
 
     # Plot edges
     [lines!(scene, lift(pos -> [pos[src(e)], pos[dst(e)]], positions), color=:gray, linewidth=2) for e in edges]
@@ -84,7 +89,7 @@ function interactive_plot_graph(g, node_colors, node_text_colors, node_color_ind
     end
 
     on(scene.events.mousebutton) do event
-        if event.button == Mouse.left
+        if event.button == Mouse.left || event.button == Mouse.right
             if event.action == Mouse.press
                 mousepos = last_mousepos[]
                 for i in 1:n
@@ -102,9 +107,13 @@ function interactive_plot_graph(g, node_colors, node_text_colors, node_color_ind
                     # Only cycle color if not moved and press/release on same node
                     if !moved[] && mouse_down_node[] == drag_idx[]
                         idx = drag_idx[]
-                        # Cycle the color index
+                        # Cycle the color index forward or backward
                         new_color_indices = copy(node_color_indices_obs[])
-                        new_color_indices[idx] = mod1(new_color_indices[idx] + 1, length(color_palette))
+                        if event.button == Mouse.left
+                            new_color_indices[idx] = mod1(new_color_indices[idx] + 1, length(color_palette))
+                        elseif event.button == Mouse.right
+                            new_color_indices[idx] = mod1(new_color_indices[idx] - 1, length(color_palette))
+                        end
                         node_color_indices_obs[] = new_color_indices
                         # Update node colors from indices
                         new_colors = copy(node_colors_obs[])
@@ -114,6 +123,9 @@ function interactive_plot_graph(g, node_colors, node_text_colors, node_color_ind
                         new_text_colors = copy(node_text_colors_obs[])
                         new_text_colors[idx] = Colors.Lab(RGB(new_colors[idx])).l > 50 ? :black : :white
                         node_text_colors_obs[] = new_text_colors
+                        # Update score using the current color indices
+                        score = get_score(g, node_info, node_color_indices_obs[])
+                        score_obs[] = score
                     end
                 end
                 dragging[] = false

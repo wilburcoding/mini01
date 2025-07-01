@@ -1,4 +1,5 @@
 include("plot_graph.jl")
+include("scoring.jl")
 using Makie.Colors 
 using Random
 using StatsBase
@@ -25,7 +26,7 @@ function label_propagation(g, node_info)
     end
 end
 
-function main(filename = "graph03.txt")
+function main(filename = "graph05.txt")
     edge_list = read_edges(filename)
     g = build_graph(edge_list)
 
@@ -36,7 +37,7 @@ function main(filename = "graph03.txt")
     end
     
     # Run label propagation
-    # label_propagation(g, node_info)
+    label_propagation(g, node_info)
 
     # Use a fixed-size color palette for cycling, e.g., 16 colors
     palette_size = 16
@@ -48,8 +49,12 @@ function main(filename = "graph03.txt")
     node_color_indices = [label_to_color_index[node_info[n].label] for n in 1:nv(g)]
     node_colors = [color_palette[i] for i in node_color_indices]
     node_text_colors = [Colors.Lab(RGB(c)).l > 50 ? :black : :white for c in node_colors]
-    
-    interactive_plot_graph(g, node_colors, node_text_colors, node_color_indices, color_palette)
+
+    interactive_plot_graph(g, node_info, node_colors, node_text_colors, node_color_indices, color_palette)
+
+    # Report the score
+    score = dave_score(g, node_info, node_color_indices)
+    println("score is $score")
 end
 
 main()
