@@ -51,7 +51,7 @@ function interactive_plot_graph(g, node_info, node_colors, node_text_colors, nod
 
     scene = Scene(size = (width, height), camera = campixel!)
     # Observable for score, initialize with the correct score
-    initial_score = dave_score(g, node_info, node_color_indices)
+    initial_score = get_score(g, node_info, node_color_indices)
     score_obs = Observable(initial_score)
     # Display score in the plot window (top left)
     text!(scene, lift(s -> "Score: $(s)", score_obs), position=Point2f0(20, height-30), align=(:left, :center), color=:black, fontsize=28)
