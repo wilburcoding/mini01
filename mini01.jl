@@ -53,7 +53,7 @@ function main(filename = "graph05.txt")
     interactive_plot_graph(g, node_info, node_colors, node_text_colors, node_color_indices, color_palette)
 
     # Report the score
-    score = dave_score(g, node_info, node_color_indices)
+    score = get_score(g, node_info, node_color_indices)
     println("score is $score")
 end
 
