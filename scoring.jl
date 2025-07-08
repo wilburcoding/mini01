@@ -1,16 +1,16 @@
 function get_score(g, node_info, node_color_indices)
     maxscore = 0
     score = 0
-    for (vertice, value) in node_info
+    for (vertex, value) in node_info
         for neighbor in value.neighbors
             c = 0
-            for path in paths(g, vertice, neighbor)
+            for path in paths(g, vertex, neighbor)
                 if (size(path)[1] <= 4)
                     c += 1
                 end
             end
             maxscore+=c
-            if (node_color_indices[vertice] == node_color_indices[neighbor])
+            if (node_color_indices[vertex] == node_color_indices[neighbor])
                 if (c >= 2)
                     score+=c
                 else
