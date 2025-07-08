@@ -41,7 +41,7 @@ function paths(g, start_node::Int, end_node::Int)
             push!(paths, copy(path)) 
         else
             for neighbor in neighbors(g, current_node)
-                if neighbor not in visited
+                if neighbor ∉ visited
                     dfs(neighbor, path)
                 end
             end
