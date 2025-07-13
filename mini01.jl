@@ -59,8 +59,7 @@ end
         
 
 function main(filename = "./graph03.txt")
-    current_time_ns = time_ns()
-    current_timestamp = Int64(current_time_ns)
+
 
     edge_list = read_edges(filename)
     g = build_graph(edge_list)
@@ -87,9 +86,12 @@ function main(filename = "./graph03.txt")
 
     #interactive_plot_graph(g, node_info, node_colors, node_text_colors, node_color_indices, color_palette)
 
+    current_time_ns = time_ns()
+    score = get_score(g, node_info, node_color_indices) 
     # Report the score
-    score = get_score(g, node_info, node_color_indices)
     println("score is $score")
+    
+    # Elapsed time for score calculation -> testing optimization
     println("elapsed time is $((time_ns() - current_time_ns) / 1e6) ms")
 end
 

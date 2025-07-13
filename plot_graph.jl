@@ -135,7 +135,7 @@ function interactive_plot_graph(g, node_info, node_colors, node_text_colors, nod
             end
         end
     end
-    run(`cmd /c cls`)
+    # run(`cmd /c cls`)
     println("You can view the graph now!")
     display(scene)
     return scene

@@ -3,12 +3,7 @@ function get_score(g, node_info, node_color_indices)
     score = 0
     for (vertex, value) in node_info
         for neighbor in value.neighbors
-            c = 0
-            for path in paths(g, vertex, neighbor)
-                if (size(path)[1] <= 4)
-                    c += 1
-                end
-            end
+            c = size(paths(g, vertex, neighbor))[1]
             maxscore+=c
             if (node_color_indices[vertex] == node_color_indices[neighbor])
                 if (c >= 2)
@@ -41,7 +36,7 @@ function paths(g, start_node::Int, end_node::Int)
             push!(paths, copy(path)) 
         else
             for neighbor in neighbors(g, current_node)
-                if neighbor ∉ visited
+                if neighbor ∉ visited && size(path)[1] < 5
                     dfs(neighbor, path)
                 end
             end
