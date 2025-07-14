@@ -44,10 +44,12 @@ function community_detection(g, node_info)
             current_score = get_score(g, node_info, node_color_indices)
             for neighbor in node_info[u].neighbors
                 old_label = node_info[u].label
+                old_color = node_color_indices[u]
                 node_info[u].label = node_info[neighbor].label
                 node_color_indices[u] = node_color_indices[neighbor]
                 scores[node_info[neighbor].label] = get_score(g, node_info, node_color_indices)
                 node_info[u].label = old_label
+                node_color_indices[u] = old_color
             end
             max_score = maximum(values(scores))
             if max_score > current_score
@@ -60,7 +62,7 @@ end
 
         
 
-function main(filename = "./graph07.txt")
+function main(filename = "./graph05.txt")
 
     edge_list = read_edges(filename)
     g = build_graph(edge_list)
