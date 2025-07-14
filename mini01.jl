@@ -30,9 +30,11 @@ end
 
 function community_detection(g, node_info)
     changed = true
+
     while changed
         changed = false
         shuffled_nodes = shuffle(1:nv(g))
+
         for u in shuffled_nodes
             scores = Dict{Int,Float16}()
             palette_size = 16
@@ -58,8 +60,7 @@ end
 
         
 
-function main(filename = "./graph03.txt")
-
+function main(filename = "./graph07.txt")
 
     edge_list = read_edges(filename)
     g = build_graph(edge_list)
@@ -71,7 +72,7 @@ function main(filename = "./graph03.txt")
     end
     community_detection(g, node_info)
     # Run label propagation
-    # label_propagation(g, node_info)
+    #label_propagation(g, node_info)
 
     # Use a fixed-size color palette for cycling, e.g., 16 colors
     palette_size = 16
@@ -84,8 +85,8 @@ function main(filename = "./graph03.txt")
     node_colors = [color_palette[i] for i in node_color_indices]
     node_text_colors = [Colors.Lab(RGB(c)).l > 50 ? :black : :white for c in node_colors]
 
-    #interactive_plot_graph(g, node_info, node_colors, node_text_colors, node_color_indices, color_palette)
-
+    interactive_plot_graph(g, node_info, node_colors, node_text_colors, node_color_indices, color_palette)
+    
     current_time_ns = time_ns()
     score = get_score(g, node_info, node_color_indices) 
     # Report the score
