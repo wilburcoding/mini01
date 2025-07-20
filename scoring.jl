@@ -1,27 +1,54 @@
-function get_score(g, node_info, node_color_indices)
-    maxscore = 0
-    score = 0
+function get_score(g, weights, node_info, node_color_indices)
+    total_weight = 0 
+    for (u, v) in weights
+        total_weight += v
+    end
+    total = 0
     for (vertex, value) in node_info
         for neighbor in value.neighbors
-            c = size(paths(g, vertex, neighbor))[1] 
-            maxscore+=c
-            if (node_color_indices[vertex] == node_color_indices[neighbor])
-                if (c >= 2)
-                    score+=c
-                else
-                    score-=c
+            if neighbor > vertex
+                edge_weight = weights[(vertex, neighbor)]
+                k_i = 0
+                for neighbor2 in value.neighbors
+                    k_i += weights[(vertex, neighbor2)]
                 end
-            else
-                if (c >= 2)
-                    score -= c
-                else
-                    score += c
+                k_j = 0
+                for neighbor2 in node_info[neighbor].neighbors
+                    k_j += weights[(neighbor, neighbor2)]
                 end
-
+                same_community = node_color_indices[vertex] == node_color_indices[neighbor] ? 1 : 0
+                total += (edge_weight - ((k_i * k_j) / (2 * total_weight))) * (same_community)
             end
+
+            
         end
     end
-    return round(score/maxscore, sigdigits=3)
+
+    # maxscore = 0
+    # score = 0
+    # for (vertex, value) in node_info
+    #     for neighbor in value.neighbors
+    #         c = size(paths(g, vertex, neighbor))[1] 
+    #         maxscore+=c
+    #         if (node_color_indices[vertex] == node_color_indices[neighbor])
+    #             if (c >= 2)
+    #                 score+=c
+    #             else
+    #                 score-=c
+    #             end
+    #         else
+    #             if (c >= 2)
+    #                 score -= c
+    #             else
+    #                 score += c
+    #             end
+
+    #         end
+    #     end
+    # end
+    # return round(score/maxscore, sigdigits=3)
+    return round(total / (2 * total_weight), sigdigits=3)
+
 
 end
 function paths(g, start_node::Int, end_node::Int)

@@ -17,6 +17,8 @@ function read_edges(filename)
             s = split(strip(line))
             if length(s) == 2 && all(x -> occursin(r"^\d+$", x), s)
                 push!(edge_list, (parse(Int, s[1]), parse(Int, s[2])))
+            elseif length(s) == 3 && all(x -> occursin(r"^\d+$", x), s[1:2]) && occursin(r"^\d+(\.\d+)?$", s[3])
+                push!(edge_list, (parse(Int, s[1]), parse(Int, s[2]), parse(Float64, s[3])))
             end
         end
     end
@@ -30,34 +32,46 @@ function build_graph(edges)
     end
     nodes = unique(vcat([e[1] for e in edges], [e[2] for e in edges]))
     g = SimpleGraph(maximum(nodes))
-    for (u, v) in edges
+    weights = Dict{Tuple{Int,Int},Float64}()
+    for (u, v, weight) in edges
         add_edge!(g, u, v)
+        weights[(u, v)] = weight
+        weights[(v, u)] = weight
     end
-    return g
+    return g, weights
 end
 
-function interactive_plot_graph(g, node_info, node_colors, node_text_colors, node_color_indices, color_palette)
+function interactive_plot_graph(g, weights, node_info, node_colors, node_text_colors, node_color_indices, color_palette)
     n = nv(g)
     edges = collect(Graphs.edges(g))
     width, height = 800, 600
-    cx, cy = width/2, height/2
+    cx, cy = width / 2, height / 2
     radius = min(width, height) * 0.4
-    positions = Observable([Point2f0(cx + radius * cos(2π*i/n), cy + radius * sin(2π*i/n)) for i in 1:n])
+    positions = Observable([Point2f0(cx + radius * cos(2π * i / n), cy + radius * sin(2π * i / n)) for i in 1:n])
 
     # Use an Observable for node colors to allow interactive updates
     node_colors_obs = Observable(copy(node_colors))
     node_color_indices_obs = Observable(copy(node_color_indices))
     node_text_colors_obs = Observable(copy(node_text_colors))
 
-    scene = Scene(size = (width, height), camera = campixel!)
+    scene = Scene(size=(width, height), camera=campixel!)
     # Observable for score, initialize with the correct score
-    initial_score = get_score(g, node_info, node_color_indices)
+    initial_score = get_score(g, weights, node_info, node_color_indices)
     score_obs = Observable(initial_score)
     # Display score in the plot window (top left)
-    text!(scene, lift(s -> "Score: $(s)", score_obs), position=Point2f0(20, height-30), align=(:left, :center), color=:black, fontsize=28)
+    text!(scene, lift(s -> "Score: $(s)", score_obs), position=Point2f0(20, height - 30), align=(:left, :center), color=:black, fontsize=28)
 
     # Plot edges
     [lines!(scene, lift(pos -> [pos[src(e)], pos[dst(e)]], positions), color=:gray, linewidth=2) for e in edges]
+    for e in edges
+        src_node, dst_node = src(e), dst(e)
+        weight = get(weights, (src_node, dst_node), 1.0)
+        # Calculate midpoint position between the two nodes
+        midpoint_pos = lift(pos -> (pos[src_node] + pos[dst_node]) / 2, positions)
+        # Add text label showing the weight
+        text!(scene, string(weight), position=midpoint_pos, align=(:center, :center),
+            color=:red, fontsize=14, strokewidth=1, strokecolor=:white)
+    end
     # Plot nodes as scatter, use node_colors_obs directly
     scatter!(scene, lift(pos -> first.(pos), positions), lift(pos -> last.(pos), positions),
         color=node_colors_obs, strokewidth=2, strokecolor=:black, markersize=60)
@@ -124,7 +138,7 @@ function interactive_plot_graph(g, node_info, node_colors, node_text_colors, nod
                         new_text_colors[idx] = Colors.Lab(RGB(new_colors[idx])).l > 50 ? :black : :white
                         node_text_colors_obs[] = new_text_colors
                         # Update score using the current color indices
-                        score = get_score(g, node_info, node_color_indices_obs[])
+                        score = get_score(g, weights,node_info, node_color_indices_obs[])
                         score_obs[] = score
                     end
                 end
