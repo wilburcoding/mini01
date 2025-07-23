@@ -63,7 +63,7 @@ end
 
         
 
-function main(filename = "./graph12-modularity.txt")
+function main(filename = "./graph13-modularity.txt")
 
     edge_list = read_edges(filename)
     g, weights = build_graph(edge_list)
